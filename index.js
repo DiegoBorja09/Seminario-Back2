@@ -1,11 +1,17 @@
 const express = require("express")
 const { port } = require("./config")
-const {connection} = require("./config/db")
 const motosModel=require("./models/motos")
-const motosservices= require("./services/motos")
+const mongoose=require("mongoose")
+const { dbUsername, dbPassword, dbHost, dbName } = require("./config/index")
+
 
 
 //Importar Routers
+mongoose.set("strictQuery", false);
+const connection= async function(){
+    const conn = await mongoose.connect(`mongodb+srv://${dbUsername}:${dbPassword}@${dbHost}/${dbName}?retryWrites=true&w=majority`)
+    console.log("Mongo DB connected:",conn.connection.host) 
+}
 
 connection()
 const app = express()
@@ -25,10 +31,10 @@ app.listen(port,()=>{
     console.log("Listening: http://localhost:"+port)
 })
  
-const motserv= new motosservices()
+
  app.get("/motos",async(req,res)=>{ 
 
-    const motos = await motserv.getAll()
+    const motos = await getAll()
 
     return res.json(motos)
             
@@ -36,7 +42,7 @@ const motserv= new motosservices()
 })
 app.put("/update:id",async(req,res)=>{
 
-    const motos = await motserv.update(req.params.id,req.body)
+    const motos = await update(req.params.id,req.body)
 
     return res.json(motos)
 
@@ -44,18 +50,75 @@ app.put("/update:id",async(req,res)=>{
 })
 app.delete("/delete:id",async(req,res)=>{
 
-    const motos = await motserv.delete(req.params.id)
+    const motos = await deletem(req.params.id)
 
     return res.json(motos)
 })
 
 app.post("/create",async(req,res)=>{
 
-    const motos = await motserv.create(req.body)
+    const motos = await create(req.body)
 
     return res.json(motos)
 
         
 })
+
+async function getAll(){
+
+    try {
+        const motos= await motosModel.find()
+
+        return motos
+
+    } catch (error) {
+        
+        return error
+
+    }
+    
+
+}
+
+async function update(id,data){
+    try {
+        const motos= await motosModel.findByIdAndUpdate(id,data,{new:true})
+
+        return motos
+        
+    } catch (error) {
+        
+        return error
+
+    }
+}
+
+async function deletem(id){
+    try {
+        const motos= await motosModel.findByIdAndDelete(id)
+
+        return motos
+        
+    } catch (error) {
+        
+        return error
+
+    }
+}
+async function create(data){
+
+    try {
+        const motos= await motosModel.create(data)
+
+        return motos
+
+    } catch (error) {
+        
+        return error
+
+    }
+    
+
+}
 
 
